@@ -21,6 +21,8 @@ For Questions or Comments, find me in the Odin Plus Team Discord or in mine:
 ***
 
 > # Update Information (Latest listed first)
+> ### v1.0.2
+> - Fix the sfx issue on dedicated servers
 > ### v1.0.1
 > - Check for PvP flag
 > ### v1.0.0

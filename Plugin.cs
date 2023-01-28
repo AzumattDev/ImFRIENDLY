@@ -1,7 +1,8 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using BepInEx;
-using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
@@ -28,40 +29,76 @@ namespace ImFRIENDLY
         }
     }
 
+
+
     [HarmonyPatch(typeof(Turret), nameof(Turret.UpdateTarget))]
     static class TurretUpdateTargetPatch
     {
-        static void Prefix(Turret __instance)
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Transpiler(
+            IEnumerable<CodeInstruction> instructions)
         {
-            ImFRIENDLYDAMMIT(__instance);
+            List<CodeInstruction> source = new(instructions);
+            for (int index = 0; index < source.Count; ++index)
+            {
+                CodeInstruction codeInstruction = source[index];
+                if (codeInstruction.opcode != OpCodes.Call) continue;
+                MethodInfo operand = codeInstruction.operand as MethodInfo;
+                if (operand == null || operand.Name != "FindClosestCreature") continue;
+                source[index] = new CodeInstruction(OpCodes.Call, ImFRIENDLYDAMMIT);
+                break;
+            }
+            return source.AsEnumerable();
         }
 
-        static void Postfix(Turret __instance)
+        internal static bool DontAttack(Character target)
         {
-            ImFRIENDLYDAMMIT(__instance);
+            if (target.IsTamed()) return true;
+            if (!target.GetComponentsInChildren<Growup>().Any())
+                return true;
+            if (!target.IsPlayer() && target != Player.m_localPlayer) return true;
+            if (target.IsPVPEnabled())
+            {
+                return true;
+            }
+
+            return false;
         }
-
-        private static void ImFRIENDLYDAMMIT(Turret __instance)
+        
+        public static Character ImFRIENDLYDAMMIT( // This is basically a copy of the method we need to fix up for the turrets, we are just replacing the call to it with this method
+            Transform me,
+            Vector3 eyePoint,
+            float hearRange,
+            float viewRange,
+            float viewAngle,
+            bool alerted,
+            bool mistVision,
+            bool includePlayers = true,
+            bool includeTamed = true,
+            List<Character> onlyTargets = null)
         {
-            if (!__instance.m_nview.IsValid())
-                return;
-            if (__instance.m_target == null) return;
-
-
-            if (!__instance.HasAmmo())
+            List<Character> allCharacters = Character.GetAllCharacters();
+            Character closestCreature = null;
+            float num1 = 99999f;
+            foreach (Character target in allCharacters.Where(target => !DontAttack(target)).Where(target => (includePlayers || target is not Player) && (includeTamed || !target.IsTamed())))
             {
-                if (!__instance.m_haveTarget)
-                    return;
-            }
-            if (__instance.m_target.IsTamed())
-                __instance.m_target = null;
-            if (!__instance.m_target.IsPlayer() && __instance.m_target != Player.m_localPlayer) return;
-            if (__instance.m_target.IsPVPEnabled())
-            {
-                return;
-            }
+                if (onlyTargets is { Count: > 0 })
+                {
+                    bool flag = onlyTargets.Any(onlyTarget => target.m_name == onlyTarget.m_name);
+                    if (!flag)
+                        continue;
+                }
 
-            __instance.m_target = null;
+                if (target.IsDead()) continue;
+                BaseAI baseAi = target.GetBaseAI();
+                if ((baseAi != null && baseAi.IsSleeping()) || !BaseAI.CanSenseTarget(me, eyePoint, hearRange,
+                        viewRange, viewAngle, alerted, mistVision, target)) continue;
+                float num2 = Vector3.Distance(target.transform.position, me.position);
+                if (!(num2 < (double)num1) && closestCreature! != null) continue;
+                closestCreature = target;
+                num1 = num2;
+            }
+            return closestCreature;
         }
     }
 }
