@@ -13,7 +13,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.0.3";
+        internal const string ModVersion = "1.0.4";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -30,42 +30,31 @@ namespace ImFRIENDLY
     }
 
 
-
     [HarmonyPatch(typeof(Turret), nameof(Turret.UpdateTarget))]
-    static class TurretUpdateTargetPatch
+    public static class TurretUpdateTargetPatch
     {
-        [HarmonyTranspiler]
-        private static IEnumerable<CodeInstruction> Transpiler(
-            IEnumerable<CodeInstruction> instructions)
+        private static bool _useNewPatch;
+
+        public static void Prepare()
         {
-            List<CodeInstruction> source = new(instructions);
-            for (int index = 0; index < source.Count; ++index)
-            {
-                CodeInstruction codeInstruction = source[index];
-                if (codeInstruction.opcode != OpCodes.Call) continue;
-                MethodInfo operand = codeInstruction.operand as MethodInfo;
-                if (operand == null || operand.Name != "FindClosestCreature") continue;
-                source[index] = new CodeInstruction(OpCodes.Call, ImFRIENDLYDAMMIT);
-                break;
-            }
-            return source.AsEnumerable();
+            if (IsVersionNewerOrEqual(0, 213, 3))
+                _useNewPatch = true;
         }
 
-        internal static bool DontAttack(Character target)
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            if (target.IsTamed()) return true;
-            if (target.GetComponentsInChildren<Growup>().Any())
-                return true;
-            if (!target.IsPlayer() && target != Player.m_localPlayer) return true;
-            if (target.IsPVPEnabled())
-            {
-                return true;
-            }
+            var targetMethod = _useNewPatch
+                ? typeof(TurretUpdateTargetPatch).GetMethod("ImFRIENDLYDAMMITPTB")
+                : typeof(TurretUpdateTargetPatch).GetMethod("ImFRIENDLYDAMMIT");
 
-            return false;
+            return instructions.Select(inst =>
+                inst.opcode == OpCodes.Call &&
+                inst.operand is MethodInfo { Name: "FindClosestCreature" }
+                    ? new CodeInstruction(OpCodes.Call, targetMethod)
+                    : inst);
         }
-        
-        public static Character ImFRIENDLYDAMMIT( // This is basically a copy of the method we need to fix up for the turrets, we are just replacing the call to it with this method
+
+        public static Character ImFRIENDLYDAMMITPTB(
             Transform me,
             Vector3 eyePoint,
             float hearRange,
@@ -80,25 +69,90 @@ namespace ImFRIENDLY
             List<Character> allCharacters = Character.GetAllCharacters();
             Character closestCreature = null;
             float num1 = 99999f;
-            foreach (Character target in allCharacters.Where(target => !DontAttack(target)).Where(target => (includePlayers || target is not Player) && (includeTamed || !target.IsTamed())))
+            foreach (Character target in allCharacters)
             {
-                if (onlyTargets is { Count: > 0 })
+                if ((includePlayers || !(target is Player)) && (includeTamed || !target.IsTamed()))
                 {
-                    bool flag = onlyTargets.Any(onlyTarget => target.m_name == onlyTarget.m_name);
-                    if (!flag)
+                    if (!AttackTarget(target))
                         continue;
-                }
+                    if (onlyTargets != null && onlyTargets.Count > 0)
+                    {
+                        bool flag = false;
+                        foreach (Character onlyTarget in onlyTargets)
+                        {
+                            if (target.m_name == onlyTarget.m_name)
+                            {
+                                flag = true;
+                                break;
+                            }
+                        }
 
-                if (target.IsDead()) continue;
-                BaseAI baseAi = target.GetBaseAI();
+                        if (!flag)
+                            continue;
+                    }
+
+                    if (!target.IsDead())
+                    {
+                        BaseAI baseAi = target.GetBaseAI();
+                        if ((!(baseAi != null) || !baseAi.IsSleeping()) &&
+                            BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision,
+                                target))
+                        {
+                            float num2 = Vector3.Distance(target.transform.position, me.position);
+                            if (num2 < (double)num1 ||
+                                (Object)closestCreature == null)
+                            {
+                                closestCreature = target;
+                                num1 = num2;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return closestCreature;
+        }
+
+        public static Character ImFRIENDLYDAMMIT(
+            Turret __instance,
+            Transform me,
+            Vector3 eyePoint,
+            float hearRange,
+            float viewRange,
+            float viewAngle,
+            bool alerted,
+            bool mistVision)
+        {
+            List<Character> allCharacters = Character.GetAllCharacters();
+            Character unfriendlyCreature = null;
+            float num1 = 99999f;
+            foreach (Character character in allCharacters)
+            {
+                if (!AttackTarget(character)) continue;
+                BaseAI baseAi = character.GetBaseAI();
                 if ((baseAi != null && baseAi.IsSleeping()) || !BaseAI.CanSenseTarget(me, eyePoint, hearRange,
-                        viewRange, viewAngle, alerted, mistVision, target)) continue;
-                float num2 = Vector3.Distance(target.transform.position, me.position);
-                if (!(num2 < (double)num1) && closestCreature! != null) continue;
-                closestCreature = target;
+                        viewRange, viewAngle, alerted, mistVision, character)) continue;
+                float num2 = Vector3.Distance(character.transform.position, me.position);
+                if (!(num2 < (double)num1) && unfriendlyCreature != null) continue;
+                unfriendlyCreature = character;
                 num1 = num2;
             }
-            return closestCreature;
+
+            return unfriendlyCreature;
+        }
+
+        internal static bool AttackTarget(Character target)
+        {
+            return target.m_nview.IsValid() && !target.IsDead() && !target.IsTamed() &&
+                   !target.GetComponents<Growup>().Any() && target.IsPVPEnabled() &&
+                   (!target.IsPlayer() || target != Player.m_localPlayer);
+        }
+
+
+        public static bool IsVersionNewerOrEqual(int major, int minor, int patch)
+        {
+            return major > Version.m_major || major == Version.m_major && minor > Version.m_minor ||
+                   major == Version.m_major && minor == Version.m_minor && patch >= Version.m_patch;
         }
     }
 }

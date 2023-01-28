@@ -20,11 +20,14 @@ For Questions or Comments, find me in the Odin Plus Team Discord or in mine:
 <a href="https://discord.gg/pdHgy6Bsng"><img src="https://i.imgur.com/Xlcbmm9.png" href="https://discord.gg/pdHgy6Bsng" width="175" height="175"></a>
 ***
 
+
+
+
 > # Update Information (Latest listed first)
-> ### v1.0.2/v1.0.3
-> - Fix the sfx issue on dedicated servers
-> - v1.0.3, fix a fuckup in my logic.
-> ### v1.0.1
-> - Check for PvP flag
-> ### v1.0.0
-> - Initial Release
+
+| `Version`   | `Update Notes`                                                                                                                                                                                                                  |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.0.4       | - Allow the code to work on the current PTB (0.213.3) even with the new changes to the turret as well as the live version (0.212.9) <br/> - Also, fix the fact I built it for PTB in the last release. Making it break on live. |
+| 1.0.2/1.0.3 | - Fix the SFX issue on dedicated servers<br/> - 1.0.3, fix a fuckup in my logic                                                                                                                                                 |
+| 1.0.1       | - Check for PvP flag                                                                                                                                                                                                            |
+| 1.0.0       | - Initial Release                                                                                                                                                                                                               |
