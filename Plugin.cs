@@ -54,7 +54,7 @@ namespace ImFRIENDLY
         internal static bool DontAttack(Character target)
         {
             if (target.IsTamed()) return true;
-            if (!target.GetComponentsInChildren<Growup>().Any())
+            if (target.GetComponentsInChildren<Growup>().Any())
                 return true;
             if (!target.IsPlayer() && target != Player.m_localPlayer) return true;
             if (target.IsPVPEnabled())
