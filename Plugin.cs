@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -6,6 +7,7 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace ImFRIENDLY
 {
@@ -13,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.0.4";
+        internal const string ModVersion = "1.0.5";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -37,8 +39,12 @@ namespace ImFRIENDLY
 
         public static void Prepare()
         {
-            if (IsVersionNewerOrEqual(0, 213, 3))
+            if (Version.GetVersionString() == "0.213.3")
+            {
+                ImFRIENDLYDAMMITPlugin.ImFRIENDLYDAMMITLogger.LogDebug(
+                    $"Valheim Version: {Version.GetVersionString()}");
                 _useNewPatch = true;
+            }
         }
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -114,7 +120,6 @@ namespace ImFRIENDLY
         }
 
         public static Character ImFRIENDLYDAMMIT(
-            Turret __instance,
             Transform me,
             Vector3 eyePoint,
             float hearRange,
@@ -124,7 +129,7 @@ namespace ImFRIENDLY
             bool mistVision)
         {
             List<Character> allCharacters = Character.GetAllCharacters();
-            Character unfriendlyCreature = null;
+            Character closestCreature = null;
             float num1 = 99999f;
             foreach (Character character in allCharacters)
             {
@@ -133,26 +138,53 @@ namespace ImFRIENDLY
                 if ((baseAi != null && baseAi.IsSleeping()) || !BaseAI.CanSenseTarget(me, eyePoint, hearRange,
                         viewRange, viewAngle, alerted, mistVision, character)) continue;
                 float num2 = Vector3.Distance(character.transform.position, me.position);
-                if (!(num2 < (double)num1) && unfriendlyCreature != null) continue;
-                unfriendlyCreature = character;
+                if (!(num2 < (double)num1) && (Object)closestCreature != null) continue;
+                closestCreature = character;
                 num1 = num2;
             }
 
-            return unfriendlyCreature;
+            return closestCreature;
         }
 
         internal static bool AttackTarget(Character target)
         {
-            return target.m_nview.IsValid() && !target.IsDead() && !target.IsTamed() &&
-                   !target.GetComponents<Growup>().Any() && target.IsPVPEnabled() &&
-                   (!target.IsPlayer() || target != Player.m_localPlayer);
-        }
+            if (!target.m_nview.IsValid()) return true;
+            if (target.IsDead())
+            {
+                return false;
+            }
 
+            if (target.IsTamed())
+            {
+                return false;
+            }
 
-        public static bool IsVersionNewerOrEqual(int major, int minor, int patch)
-        {
-            return major > Version.m_major || major == Version.m_major && minor > Version.m_minor ||
-                   major == Version.m_major && minor == Version.m_minor && patch >= Version.m_patch;
+            if (target.GetComponents<Growup>().Any())
+            {
+                return false;
+            }
+
+            if (target.IsPVPEnabled())
+            {
+                return true;
+            }
+
+            if (!target.IsPlayer())
+            {
+                return true;
+            }
+
+            if (target != Player.m_localPlayer)
+            {
+                return true;
+            }
+
+            if (target == Player.m_localPlayer)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
