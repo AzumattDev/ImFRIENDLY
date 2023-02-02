@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.0.5";
+        internal const string ModVersion = "1.0.6";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -39,7 +39,7 @@ namespace ImFRIENDLY
 
         public static void Prepare()
         {
-            if (Version.GetVersionString() == "0.213.3")
+            if (Version.GetVersionString() == "0.213.4")
             {
                 ImFRIENDLYDAMMITPlugin.ImFRIENDLYDAMMITLogger.LogDebug(
                     $"Valheim Version: {Version.GetVersionString()}");
@@ -185,6 +185,15 @@ namespace ImFRIENDLY
             }
 
             return true;
+        }
+    }
+    
+    [HarmonyPatch(typeof(Turret),nameof(Turret.ShootProjectile))]
+    static class TurretShootProjectilePatch
+    {
+        static bool Prefix(Turret __instance, ref Character ___m_target)
+        {
+            return TurretUpdateTargetPatch.AttackTarget(___m_target);
         }
     }
 }
