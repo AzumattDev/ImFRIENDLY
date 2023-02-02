@@ -27,6 +27,7 @@ For Questions or Comments, find me in the Odin Plus Team Discord or in mine:
 
 | `Version`   | `Update Notes`                                                                                                                                                                                                                  |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.0.6       | - Update for PTB 0.213.4   <br/> - Attempt fixing shooting players that didn't load the ammo on servers.                                                                                                                        |
 | 1.0.5       | - Fix some issues on the live version. Fix target issue as well.                                                                                                                                                                |
 | 1.0.4       | - Allow the code to work on the current PTB (0.213.3) even with the new changes to the turret as well as the live version (0.212.9) <br/> - Also, fix the fact I built it for PTB in the last release. Making it break on live. |
 | 1.0.2/1.0.3 | - Fix the SFX issue on dedicated servers<br/> - 1.0.3, fix a fuckup in my logic                                                                                                                                                 |
