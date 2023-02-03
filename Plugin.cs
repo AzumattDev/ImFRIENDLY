@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.0.6";
+        internal const string ModVersion = "1.0.7";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -138,7 +138,7 @@ namespace ImFRIENDLY
                 if ((baseAi != null && baseAi.IsSleeping()) || !BaseAI.CanSenseTarget(me, eyePoint, hearRange,
                         viewRange, viewAngle, alerted, mistVision, character)) continue;
                 float num2 = Vector3.Distance(character.transform.position, me.position);
-                if (!(num2 < (double)num1) && (Object)closestCreature != null) continue;
+                if (!(num2 < (double)num1) && closestCreature != null) continue;
                 closestCreature = character;
                 num1 = num2;
             }
@@ -174,9 +174,9 @@ namespace ImFRIENDLY
                 return true;
             }
 
-            if (target != Player.m_localPlayer)
+            if (target.IsPlayer()) // If I don't do this, it will attack other players overall. Wish there was a better way to see if the player should be attacked.
             {
-                return true;
+                return false;
             }
 
             if (target == Player.m_localPlayer)
