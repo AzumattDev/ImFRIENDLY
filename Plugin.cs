@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.0.7";
+        internal const string ModVersion = "1.0.8";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -35,23 +35,9 @@ namespace ImFRIENDLY
     [HarmonyPatch(typeof(Turret), nameof(Turret.UpdateTarget))]
     public static class TurretUpdateTargetPatch
     {
-        private static bool _useNewPatch;
-
-        public static void Prepare()
-        {
-            if (Version.GetVersionString() == "0.213.4")
-            {
-                ImFRIENDLYDAMMITPlugin.ImFRIENDLYDAMMITLogger.LogDebug(
-                    $"Valheim Version: {Version.GetVersionString()}");
-                _useNewPatch = true;
-            }
-        }
-
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var targetMethod = _useNewPatch
-                ? typeof(TurretUpdateTargetPatch).GetMethod("ImFRIENDLYDAMMITPTB")
-                : typeof(TurretUpdateTargetPatch).GetMethod("ImFRIENDLYDAMMIT");
+            var targetMethod = typeof(TurretUpdateTargetPatch).GetMethod("ImFRIENDLYDAMMIT");
 
             return instructions.Select(inst =>
                 inst.opcode == OpCodes.Call &&
@@ -60,7 +46,7 @@ namespace ImFRIENDLY
                     : inst);
         }
 
-        public static Character ImFRIENDLYDAMMITPTB(
+        public static Character ImFRIENDLYDAMMIT(
             Transform me,
             Vector3 eyePoint,
             float hearRange,
@@ -114,33 +100,6 @@ namespace ImFRIENDLY
                         }
                     }
                 }
-            }
-
-            return closestCreature;
-        }
-
-        public static Character ImFRIENDLYDAMMIT(
-            Transform me,
-            Vector3 eyePoint,
-            float hearRange,
-            float viewRange,
-            float viewAngle,
-            bool alerted,
-            bool mistVision)
-        {
-            List<Character> allCharacters = Character.GetAllCharacters();
-            Character closestCreature = null;
-            float num1 = 99999f;
-            foreach (Character character in allCharacters)
-            {
-                if (!AttackTarget(character)) continue;
-                BaseAI baseAi = character.GetBaseAI();
-                if ((baseAi != null && baseAi.IsSleeping()) || !BaseAI.CanSenseTarget(me, eyePoint, hearRange,
-                        viewRange, viewAngle, alerted, mistVision, character)) continue;
-                float num2 = Vector3.Distance(character.transform.position, me.position);
-                if (!(num2 < (double)num1) && closestCreature != null) continue;
-                closestCreature = character;
-                num1 = num2;
             }
 
             return closestCreature;

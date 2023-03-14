@@ -27,6 +27,7 @@ For Questions or Comments, find me in the Odin Plus Team Discord or in mine:
 
 | `Version`   | `Update Notes`                                                                                                                                                                                                                  |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.0.8       | - Update for Valheim 0.214.2                                                                                                                                                                                                    |
 | 1.0.7       | - Fix some shit again. Sorry (Thank you Darkness)                                                                                                                                                                               |
 | 1.0.6       | - Update for PTB 0.213.4   <br/> - Attempt fixing shooting players that didn't load the ammo on servers.                                                                                                                        |
 | 1.0.5       | - Fix some issues on the live version. Fix target issue as well.                                                                                                                                                                |
