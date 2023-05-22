@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.0.8";
+        internal const string ModVersion = "1.1.0";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -63,7 +63,7 @@ namespace ImFRIENDLY
             float num1 = 99999f;
             foreach (Character target in allCharacters)
             {
-                if ((includePlayers || !(target is Player)) && (includeTamed || !target.IsTamed()))
+                if ((includePlayers || target is not Player) && (includeTamed || !target.IsTamed()))
                 {
                     if (!AttackTarget(target))
                         continue;
@@ -119,6 +119,16 @@ namespace ImFRIENDLY
             }
 
             if (target.GetComponents<Growup>().Any())
+            {
+                return false;
+            }
+
+            if (target.GetComponents<AnimalAI>().Any())
+            {
+                return false;
+            }
+
+            if (target.GetFaction() == Character.Faction.Players)
             {
                 return false;
             }
