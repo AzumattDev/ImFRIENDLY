@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.1.0";
+        internal const string ModVersion = "1.1.1";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -87,8 +87,7 @@ namespace ImFRIENDLY
                     {
                         BaseAI baseAi = target.GetBaseAI();
                         if ((!(baseAi != null) || !baseAi.IsSleeping()) &&
-                            BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision,
-                                target))
+                            BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, target, passiveAggresive: true)) // Setting passiveAggresive to true here because the base game does it in FindClosestCreature.
                         {
                             float num2 = Vector3.Distance(target.transform.position, me.position);
                             if (num2 < (double)num1 ||
