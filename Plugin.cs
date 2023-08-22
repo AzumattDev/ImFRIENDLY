@@ -57,10 +57,10 @@ namespace ImFRIENDLY
             bool passiveAggresive,
             bool includePlayers = true,
             bool includeTamed = true,
-            List<Character> onlyTargets = null)
+            List<Character> onlyTargets = null!)
         {
             List<Character> allCharacters = Character.GetAllCharacters();
-            Character closestCreature = null;
+            Character closestCreature = null!;
             float num1 = 99999f;
             foreach (Character target in allCharacters)
             {
@@ -88,11 +88,11 @@ namespace ImFRIENDLY
                     {
                         BaseAI baseAi = target.GetBaseAI();
                         if ((!(baseAi != null) || !baseAi.IsSleeping()) &&
-                            BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, target, passiveAggresive)) // Setting passiveAggresive to true here because the base game does it in FindClosestCreature.
+                            BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, target, passiveAggresive, false)) // Setting passiveAggresive to true here because the base game does it in FindClosestCreature.
                         {
                             float num2 = Vector3.Distance(target.transform.position, me.position);
                             if (num2 < (double)num1 ||
-                                (Object)closestCreature == null)
+                                closestCreature == null)
                             {
                                 closestCreature = target;
                                 num1 = num2;
