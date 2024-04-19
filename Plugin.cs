@@ -15,14 +15,12 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.1.2";
+        internal const string ModVersion = "1.1.3";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
         private readonly Harmony _harmony = new(ModGUID);
-
-        public static readonly ManualLogSource ImFRIENDLYDAMMITLogger =
-            BepInEx.Logging.Logger.CreateLogSource(ModName);
+        public static readonly ManualLogSource ImFRIENDLYDAMMITLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
 
         public void Awake()
         {
