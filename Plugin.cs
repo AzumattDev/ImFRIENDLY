@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.1.3";
+        internal const string ModVersion = "1.1.4";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -35,7 +35,7 @@ namespace ImFRIENDLY
     {
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var targetMethod = typeof(TurretUpdateTargetPatch).GetMethod("ImFRIENDLYDAMMIT");
+            var targetMethod = typeof(TurretUpdateTargetPatch).GetMethod(nameof(TurretUpdateTargetPatch.ImFRIENDLYDAMMIT));
 
             return instructions.Select(inst =>
                 inst.opcode == OpCodes.Call &&
@@ -55,6 +55,7 @@ namespace ImFRIENDLY
             bool passiveAggresive,
             bool includePlayers = true,
             bool includeTamed = true,
+            bool includeEnemies = true,
             List<Character> onlyTargets = null!)
         {
             List<Character> allCharacters = Character.GetAllCharacters();
@@ -62,7 +63,7 @@ namespace ImFRIENDLY
             float num1 = 99999f;
             foreach (Character target in allCharacters)
             {
-                if ((includePlayers || target is not Player) && (includeTamed || !target.IsTamed()))
+                if ((includePlayers || target is not Player) && (includeEnemies || target is not Player) && (includeTamed || !target.IsTamed()))
                 {
                     if (!AttackTarget(target))
                         continue;
@@ -85,12 +86,17 @@ namespace ImFRIENDLY
                     if (!target.IsDead())
                     {
                         BaseAI baseAi = target.GetBaseAI();
-                        if ((!(baseAi != null) || !baseAi.IsSleeping()) &&
-                            BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, target, passiveAggresive, false)) // Setting passiveAggresive to true here because the base game does it in FindClosestCreature.
+                        if ((!(baseAi != null) || !baseAi.IsSleeping()) && BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, target, passiveAggresive, false)) // Setting passiveAggresive to true here because the base game does it in FindClosestCreature.
                         {
+                            if (!includeEnemies && ZoneSystem.instance.GetGlobalKey(GlobalKeys.PassiveMobs))
+                            {
+                                WearNTear component = me.GetComponent<WearNTear>();
+                                if (component != null && (double)component.GetHealthPercentage() == 1.0)
+                                    continue;
+                            }
+
                             float num2 = Vector3.Distance(target.transform.position, me.position);
-                            if (num2 < (double)num1 ||
-                                closestCreature == null)
+                            if (num2 < (double)num1 || closestCreature == null)
                             {
                                 closestCreature = target;
                                 num1 = num2;
@@ -154,8 +160,8 @@ namespace ImFRIENDLY
             return true;
         }
     }
-    
-    [HarmonyPatch(typeof(Turret),nameof(Turret.ShootProjectile))]
+
+    [HarmonyPatch(typeof(Turret), nameof(Turret.ShootProjectile))]
     static class TurretShootProjectilePatch
     {
         static bool Prefix(Turret __instance, ref Character ___m_target)
