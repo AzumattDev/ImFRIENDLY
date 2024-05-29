@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.1.4";
+        internal const string ModVersion = "1.1.5";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -65,7 +65,7 @@ namespace ImFRIENDLY
             {
                 if ((includePlayers || target is not Player) && (includeEnemies || target is not Player) && (includeTamed || !target.IsTamed()))
                 {
-                    if (!AttackTarget(target))
+                    if (!AttackTarget(target) && (Utils.GetPrefabName(me.gameObject.name) != "piece_Charred_Balista"))
                         continue;
                     if (onlyTargets != null && onlyTargets.Count > 0)
                     {
@@ -166,6 +166,11 @@ namespace ImFRIENDLY
     {
         static bool Prefix(Turret __instance, ref Character ___m_target)
         {
+            if (__instance.m_name == "$piece_charredballista")
+            {
+                return true;
+            }
+
             return TurretUpdateTargetPatch.AttackTarget(___m_target);
         }
     }
