@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.1.5";
+        internal const string ModVersion = "1.1.6";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -61,49 +61,66 @@ namespace ImFRIENDLY
             List<Character> allCharacters = Character.GetAllCharacters();
             Character closestCreature = null!;
             float num1 = 99999f;
-            foreach (Character target in allCharacters)
+            int num2;
+            if (!includeEnemies && ZoneSystem.instance.GetGlobalKey(GlobalKeys.PassiveMobs))
             {
-                if ((includePlayers || target is not Player) && (includeEnemies || target is not Player) && (includeTamed || !target.IsTamed()))
+                WearNTear component = me.GetComponent<WearNTear>();
+                if (component != null)
                 {
-                    if (!AttackTarget(target) && (Utils.GetPrefabName(me.gameObject.name) != "piece_Charred_Balista"))
-                        continue;
-                    if (onlyTargets != null && onlyTargets.Count > 0)
+                    num2 = component.GetHealthPercentage() == 1.0 ? 1 : 0;
+                    goto label_4;
+                }
+            }
+
+            num2 = 0;
+            label_4:
+            if (num2 != 0)
+                return null;
+            bool areWeEnemy = (includePlayers || includeTamed) && !includeEnemies;
+            if (!areWeEnemy)
+            {
+                foreach (Character target in allCharacters)
+                {
+                    if ((includePlayers || target is not Player) && (includeEnemies || target is not Player) && (includeTamed || !target.IsTamed()))
                     {
-                        bool flag = false;
-                        foreach (Character onlyTarget in onlyTargets)
+                        ImFRIENDLYDAMMITPlugin.ImFRIENDLYDAMMITLogger.LogDebug($"Checking {target.m_name} from {Utils.GetPrefabName(me.gameObject.name)}");
+                        if (!AttackTarget(target) || includeEnemies)
+                            continue;
+                        if (onlyTargets != null && onlyTargets.Count > 0)
                         {
-                            if (target.m_name == onlyTarget.m_name)
+                            bool flag = false;
+                            foreach (Character onlyTarget in onlyTargets)
                             {
-                                flag = true;
-                                break;
+                                if (target.m_name == onlyTarget.m_name)
+                                {
+                                    flag = true;
+                                    break;
+                                }
                             }
+
+                            if (!flag)
+                                continue;
                         }
 
-                        if (!flag)
-                            continue;
-                    }
-
-                    if (!target.IsDead())
-                    {
-                        BaseAI baseAi = target.GetBaseAI();
-                        if ((!(baseAi != null) || !baseAi.IsSleeping()) && BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, target, passiveAggresive, false)) // Setting passiveAggresive to true here because the base game does it in FindClosestCreature.
+                        if (!target.IsDead())
                         {
-                            if (!includeEnemies && ZoneSystem.instance.GetGlobalKey(GlobalKeys.PassiveMobs))
+                            BaseAI baseAi = target.GetBaseAI();
+                            if ((!(baseAi != null) || !baseAi.IsSleeping()) && BaseAI.CanSenseTarget(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, target, passiveAggresive, false)) // Setting passiveAggresive to true here because the base game does it in FindClosestCreature.
                             {
-                                WearNTear component = me.GetComponent<WearNTear>();
-                                if (component != null && (double)component.GetHealthPercentage() == 1.0)
-                                    continue;
-                            }
-
-                            float num2 = Vector3.Distance(target.transform.position, me.position);
-                            if (num2 < (double)num1 || closestCreature == null)
-                            {
-                                closestCreature = target;
-                                num1 = num2;
+                                float num3 = Vector3.Distance(target.transform.position, me.position);
+                                if (num3 < (double)num1 || closestCreature == null)
+                                {
+                                    closestCreature = target;
+                                    num1 = num3;
+                                }
                             }
                         }
                     }
                 }
+            }
+            else
+            {
+                return BaseAI.FindClosestCreature(me, eyePoint, hearRange, viewRange, viewAngle, alerted, mistVision, passiveAggresive, includePlayers, includeTamed, includeEnemies, onlyTargets);
             }
 
             return closestCreature;
@@ -166,6 +183,7 @@ namespace ImFRIENDLY
     {
         static bool Prefix(Turret __instance, ref Character ___m_target)
         {
+            ImFRIENDLYDAMMITPlugin.ImFRIENDLYDAMMITLogger.LogDebug($"Shooting projectile from {Utils.GetPrefabName(__instance.gameObject.name)} ({__instance.m_name})");
             if (__instance.m_name == "$piece_charredballista")
             {
                 return true;
