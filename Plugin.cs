@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.1.6";
+        internal const string ModVersion = "1.1.7";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
@@ -84,7 +84,7 @@ namespace ImFRIENDLY
                     if ((includePlayers || target is not Player) && (includeEnemies || target is not Player) && (includeTamed || !target.IsTamed()))
                     {
                         ImFRIENDLYDAMMITPlugin.ImFRIENDLYDAMMITLogger.LogDebug($"Checking {target.m_name} from {Utils.GetPrefabName(me.gameObject.name)}");
-                        if (!AttackTarget(target) || includeEnemies)
+                        if (!AttackTarget(target) || !includeEnemies)
                             continue;
                         if (onlyTargets != null && onlyTargets.Count > 0)
                         {
