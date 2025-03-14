@@ -15,7 +15,7 @@ namespace ImFRIENDLY
     public class ImFRIENDLYDAMMITPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ImFRIENDLYDAMMIT";
-        internal const string ModVersion = "1.1.7";
+        internal const string ModVersion = "1.1.9";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
 
